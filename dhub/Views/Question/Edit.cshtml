@@ -1,0 +1,104 @@
+﻿@model Question
+
+@{
+    ViewData["Title"] = "Edit Question";
+}
+
+<h2>Edit Question</h2>
+
+<form id="edit-question-form">
+    <input type="hidden" asp-for="QuestionID" />
+
+    <div class="form-group">
+        <label asp-for="QuestionText" class="control-label"></label>
+        <input asp-for="QuestionText" class="form-control" />
+        <span asp-validation-for="QuestionText" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IsRequired" class="control-label"></label>
+        <input asp-for="IsRequired" type="checkbox" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IsHidden" class="control-label"></label>
+        <input asp-for="IsHidden" type="checkbox" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="QuestionType" class="control-label"></label>
+        <select id="questionType" name="QuestionType" class="form-control">
+            <option value="TextInput">Text Input</option>
+            <option value="Dropdown">Dropdown</option>
+            <option value="RadioButton">Radio Button</option>
+            <option value="MultipleSelect">Multiple Select</option>
+        </select>
+    </div>
+
+    <div id="options-container" class="form-group">
+        <label>Options</label>
+        <ul>
+            @foreach (var option in Model.Options)
+            {
+                <li>
+                    <input type="text" class="form-control option-input" value="@option" />
+                    <button type="button" class="btn btn-danger btn-sm remove-option">Remove</button>
+                </li>
+            }
+        </ul>
+        <button type="button" class="btn btn-secondary btn-sm" id="add-option">Add Option</button>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#questionType').val('@Model.QuestionType.ToString()');
+
+            $('#questionType').change(function () {
+                var selectedType = $(this).val();
+                if (selectedType === 'Dropdown' || selectedType === 'RadioButton' || selectedType === 'MultipleSelect') {
+                    $('#options-container').show();
+                } else {
+                    $('#options-container').hide();
+                }
+            });
+
+            $('#add-option').click(function () {
+                $('#options-container ul').append('<li><input type="text" class="form-control option-input" /><button type="button" class="btn btn-danger btn-sm remove-option">Remove</button></li>');
+            });
+
+            $(document).on('click', '.remove-option', function () {
+                $(this).closest('li').remove();
+            });
+
+            $('#edit-question-form').submit(function (e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                $.ajax({
+                    url: '@Url.Action("Edit", "Question")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        alert('Question updated successfully!');
+                        window.location.href = '@Url.Action("Index", "Question")'; 
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Error updating question: ' + error);
+                    }
+                });
+            });
+
+            var questionType = $('#questionType').val();
+            if (questionType === 'Dropdown' || questionType === 'RadioButton' || questionType === 'MultipleSelect') {
+                $('#options-container').show();
+            } else {
+                $('#options-container').hide();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,59 @@
+﻿@model IEnumerable<Question>
+
+@{
+    ViewData["Title"] = "Questions";
+}
+
+<h2>Questions</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Question Text</th>
+            <th>Question Type</th>
+            <th>Survey</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var question in Model)
+        {
+            <tr>
+                <td>@question.QuestionText</td>
+                <td>@question.QuestionType</td>
+                <td>@question.Survey.Name</td>
+                <td>
+                    <a href="@Url.Action("Details", "Question", new { id = question.QuestionID })" class="btn btn-info">Details</a>
+                    <button class="btn btn-danger delete-question" data-id="@question.QuestionID">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.delete-question').click(function () {
+                var button = $(this);
+                var questionId = button.data('id');
+
+                if (confirm('Are you sure you want to delete this question?')) {
+                    $.ajax({
+                        url: '@Url.Action("Delete", "Question")/' + questionId,
+                        type: 'POST',
+                        data: { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                        success: function () {
+                            button.closest('tr').remove();
+                            alert('Question deleted successfully.');
+                        },
+                        error: function (xhr, status, error) {
+                            alert('Error deleting question: ' + error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

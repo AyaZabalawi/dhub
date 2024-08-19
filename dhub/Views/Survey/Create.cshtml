@@ -1,0 +1,70 @@
+﻿@model Survey
+
+@{
+    ViewData["Title"] = "Create Survey";
+}
+
+<h2>Create Survey</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div id="questions-list">
+        <div class="form-group">
+            <label>Question</label>
+            <input name="Questions[0].QuestionText" class="form-control" placeholder="Enter question text" />
+
+            <label>Is Required</label>
+            <input type="checkbox" name="Questions[0].IsRequired" />
+
+            <label>Is Hidden</label>
+            <input type="checkbox" name="Questions[0].IsHidden" />
+
+            <label>Question Type</label>
+            <select id="questionType-0" name="Questions[0].QuestionType" class="form-control">
+                <option value="TextInput">Text Input</option>
+                <option value="Dropdown">Dropdown</option>
+                <option value="RadioButton">Radio Button</option>
+                <option value="MultipleSelect">Multiple Select</option>
+            </select>
+
+            <div class="form-group" id="options-container-0">
+                <label>Options</label>
+                <ul>
+                    <li>
+                        <input type="text" class="form-control" name="Questions[0].Options[0]" />
+                        <button type="button" class="btn btn-danger btn-sm remove-option">Remove</button>
+                    </li>
+                </ul>
+                <button type="button" class="btn btn-secondary btn-sm add-option" data-question-index="0">Add Option</button>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Survey</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            
+            $('.add-option').click(function () {
+                var index = $(this).data('question-index');
+                var optionsContainer = $('#options-container-' + index + ' ul');
+                var optionCount = optionsContainer.children('li').length;
+                optionsContainer.append('<li><input type="text" class="form-control" name="Questions[' + index + '].Options[' + optionCount + ']" /><button type="button" class="btn btn-danger btn-sm remove-option">Remove</button></li>');
+            });
+
+            
+            $(document).on('click', '.remove-option', function () {
+                $(this).closest('li').remove();
+            });
+        });
+    </script>
+}

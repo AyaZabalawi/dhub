@@ -1,0 +1,30 @@
+﻿@model Survey
+
+@{
+    ViewBag.Title = "Survey Details";
+}
+
+<h2>Survey Details</h2>
+
+<div>
+    <h4>@Model.Name</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Survey Name</dt>
+        <dd class="col-sm-10">@Model.Name</dd>
+    </dl>
+
+    <h5>Questions</h5>
+    <ul>
+        @foreach (var question in Model.Questions)
+        {
+            <li>
+                <strong>@question.QuestionText</strong> (@question.QuestionType) <br />
+                Required: @question.IsRequired, Hidden: @question.IsHidden
+            </li>
+        }
+    </ul>
+
+    <a href="@Url.Action("Edit", "Survey", new { id = Model.SurveyID })" class="btn btn-warning">Edit</a>
+    <a href="@Url.Action("Index", "Survey")" class="btn btn-secondary">Back to List</a>
+</div>

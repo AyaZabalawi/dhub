@@ -1,0 +1,19 @@
+﻿@model SurveyResponse
+
+@{
+    ViewData["Title"] = "Survey Response Details";
+}
+
+<h2>Survey Response Details</h2>
+
+<div>
+    <h3>Survey: @Model.Survey.Name</h3>
+    <p>Submission Date: @Model.SubmissionDate</p>
+
+    <!-- Display serialized responses if needed -->
+    <div id="responses">
+        @Html.Raw(Model.ResponsesJson) 
+    </div>
+
+    <a href="@Url.Action("Index", "SurveyResponse")" class="btn btn-secondary">Back to List</a>
+</div>

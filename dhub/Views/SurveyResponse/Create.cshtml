@@ -1,0 +1,45 @@
+﻿@model SurveyResponse
+
+@{
+    ViewData["Title"] = "Create Survey Response";
+}
+
+<h2>Create Survey Response</h2>
+
+<form id="create-response-form" asp-action="Create">
+    <div class="form-group">
+        <label asp-for="SurveyID" class="control-label"></label>
+        <select asp-for="SurveyID" asp-items="@(new SelectList(ViewBag.Surveys, "SurveyID", "SurveyName"))" class="form-control"></select>
+        <span asp-validation-for="SurveyID" class="text-danger"></span>
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#create-response-form').submit(function (e) {
+                e.preventDefault();
+
+                var form = $(this);
+                var formData = form.serialize();
+
+                $.ajax({
+                    url: '@Url.Action("Create", "SurveyResponse")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        alert('Survey response created successfully!');
+                        window.location.href = '@Url.Action("Index", "SurveyResponse")';
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Error creating survey response: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+}
