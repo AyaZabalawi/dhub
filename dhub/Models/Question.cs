@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace dhub.Models
 {
@@ -21,10 +22,12 @@ namespace dhub.Models
         public bool IsHidden { get; set; }
 
         [Required]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public QuestionType QuestionType { get; set; }
 
-        public string[] Options { get; set; } 
+        public List <string> Options { get; set; }  = new List<string>();
 
-        public Survey Survey { get; set; }
+        [JsonIgnore]
+        public virtual Survey? Survey { get; set; }
     }
 }

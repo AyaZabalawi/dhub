@@ -4,26 +4,28 @@
     ViewData["Title"] = "Survey Responses";
 }
 
-<h2>Survey Responses</h2>
+<h2>@ViewData["Title"]</h2>
 
-<table class="table">
+<table class="table mt-3">
     <thead>
         <tr>
-            <th>Survey</th>
-            <th>Submission Date</th>
-            <th>Details</th>
+            <th>Response ID</th>
+            <th>Survey Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var response in Model)
         {
             <tr>
+                <td>@response.ResponseID</td>
                 <td>@response.Survey.Name</td>
-                <td>@response.SubmissionDate</td>
                 <td>
-                    <a href="@Url.Action("Details", "SurveyResponse", new { id = response.ResponseID })" class="btn btn-info">Details</a>
+                    <a href="@Url.Action("Details", "SurveyResponse", new { id = response.ResponseID })" class="btn btn-info">View Details</a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+<a href="@Url.Action("Index", "Survey")" class="btn btn-primary mt-3">Back to Surveys</a>

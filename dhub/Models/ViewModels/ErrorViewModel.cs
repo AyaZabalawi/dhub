@@ -1,4 +1,4 @@
-namespace dhub.Models
+namespace dhub.Models.ViewModels
 {
     public class ErrorViewModel
     {

@@ -1,45 +1,123 @@
-﻿@model SurveyResponse
+﻿@model SurveyResponseViewModel
 
 @{
-    ViewData["Title"] = "Create Survey Response";
+    ViewData["Title"] = "Submit Survey Response";
 }
 
-<h2>Create Survey Response</h2>
+<h2>@ViewData["Title"]</h2>
 
-<form id="create-response-form" asp-action="Create">
-    <div class="form-group">
-        <label asp-for="SurveyID" class="control-label"></label>
-        <select asp-for="SurveyID" asp-items="@(new SelectList(ViewBag.Surveys, "SurveyID", "SurveyName"))" class="form-control"></select>
-        <span asp-validation-for="SurveyID" class="text-danger"></span>
-    </div>
+<form id="surveyResponseForm">
+    <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
 
+    @for (var i = 0; i < Model.Responses.Count; i++)
+    {
+        var response = Model.Responses[i];
+        <div class="question-container">
+            <input type="hidden" name="Responses[@i].QuestionID" value="@response.QuestionID" />
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+            <label>@response.QuestionText</label>
+
+            @if (response.QuestionType == QuestionType.TextInput)
+            {
+                <input type="text" name="Responses[@i].Response" class="form-control" />
+            }
+            else if (response.QuestionType == QuestionType.Dropdown)
+            {
+                <select name="Responses[@i].Response" class="form-control">
+                    @foreach (var option in response.Options)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            }
+            else if (response.QuestionType == QuestionType.RadioButton)
+            {
+                @foreach (var option in response.Options)
+                {
+                    <div>
+                        <input type="radio" name="Responses[@i].Response" value="@option" />
+                        <label>@option</label>
+                    </div>
+                }
+            }
+            else if (response.QuestionType == QuestionType.MultipleSelect)
+            {
+                <select multiple name="Responses[@i].Response" class="form-control">
+                    @foreach (var option in response.Options)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            }
+        </div>
+    }
+
+    <button type="submit" class="btn btn-success">Submit Response</button>
 </form>
 
-@section Scripts {
+@section Scripts
+{
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            $('#create-response-form').submit(function (e) {
+            $('#surveyResponseForm').submit(function (e) {
                 e.preventDefault();
 
-                var form = $(this);
-                var formData = form.serialize();
+                var surveyData = {
+                    SurveyID: $('input[name="SurveyID"]').val(),
+                    Responses: []
+                };
+
+                $('#surveyResponseForm .question-container').each(function () {
+                    var questionContainer = $(this);
+                    var questionID = questionContainer.find('input[type="hidden"]').val();
+                    var questionText = questionContainer.find('label').text();
+                    var response = {
+                        QuestionID: questionID,
+                        QuestionText: questionText,
+                        Response: []
+                    };
+
+                    var responseValue = null;
+                    if (questionContainer.find('input[type="text"]').length) {
+                        responseValue = questionContainer.find('input[type="text"]').val();
+                        response.Response.push(responseValue);
+                    } else if (questionContainer.find('input[type="radio"]').length) {
+                        responseValue = questionContainer.find('input:checked').val();
+                        response.Response.push(responseValue);
+                    } else if (questionContainer.find('select[multiple]').length) {
+                        responseValue = questionContainer.find('select[multiple]').val();
+                        response.Response = responseValue; 
+                    } else if (questionContainer.find('select').length) {
+                        responseValue = questionContainer.find('select').val();
+                        response.Response.push(responseValue); 
+                    }
+
+                    console.log('Question ID:', questionID);
+                    console.log('Response Value:', response.Response);
+
+                    if (response.Response.length > 0) {
+                        surveyData.Responses.push(response);
+                    }
+                });
+
+                console.log('Survey Data:', JSON.stringify(surveyData));
 
                 $.ajax({
-                    url: '@Url.Action("Create", "SurveyResponse")',
-                    type: 'POST',
-                    data: formData,
-                    success: function (response) {
-                        alert('Survey response created successfully!');
-                        window.location.href = '@Url.Action("Index", "SurveyResponse")';
+                    url: '/SurveyResponse/Create/' + $('#SurveyID').val(),
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(surveyData),
+                    success: function (result) {
+                        alert('Survey submitted successfully!');
+                        window.location.href = '/survey/index';
                     },
-                    error: function (xhr, status, error) {
-                        alert('Error creating survey response: ' + error);
+                    error: function (xhr) {
+                        alert('An error occurred: ' + xhr.responseText);
                     }
                 });
             });
         });
+
     </script>
 }

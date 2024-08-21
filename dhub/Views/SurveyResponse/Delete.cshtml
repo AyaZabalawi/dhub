@@ -1,0 +1,29 @@
+﻿@model SurveyResponseDetailsViewModel
+
+@{
+    ViewData["Title"] = "Confirm Delete";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<h3>Are you sure you want to delete this submission?</h3>
+
+<div>
+    <h4>Survey Response Details</h4>
+    <dl class="row">
+        <dt class="col-sm-3">Response ID</dt>
+        <dd class="col-sm-9">@Model.ResponseID</dd>
+
+        <dt class="col-sm-3">Survey Name</dt>
+        <dd class="col-sm-9">@Model.SurveyName</dd>
+
+        <dt class="col-sm-3">Submission Date</dt>
+        <dd class="col-sm-9">@Model.SubmissionDate</dd>
+    </dl>
+</div>
+
+<form method="post" asp-action="Delete" asp-route-id="@Model.ResponseID">
+    <input type="hidden" name="id" value="@Model.ResponseID" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="@Url.Action("Index", "Survey", new { id = Model.SurveyID })" class="btn btn-secondary">Cancel</a>
+</form>

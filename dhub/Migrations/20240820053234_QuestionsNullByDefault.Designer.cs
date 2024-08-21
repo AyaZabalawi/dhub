@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using dhub.Data;
 
@@ -11,9 +12,11 @@ using dhub.Data;
 namespace dhub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240820053234_QuestionsNullByDefault")]
+    partial class QuestionsNullByDefault
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,10 +91,6 @@ namespace dhub.Migrations
                     b.Property<Guid>("QuestionID")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("QuestionText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid>("SurveyResponseID")
                         .HasColumnType("uniqueidentifier");
 
@@ -102,35 +101,6 @@ namespace dhub.Migrations
                     b.HasIndex("SurveyResponseID");
 
                     b.ToTable("QuestionResponses");
-                });
-
-            modelBuilder.Entity("dhub.Models.QuestionResponseDetails", b =>
-                {
-                    b.Property<Guid>("QuestionResponseDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AnswerText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("QuestionID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("QuestionResponseID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("QuestionText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("QuestionResponseDetailId");
-
-                    b.HasIndex("QuestionID");
-
-                    b.HasIndex("QuestionResponseID");
-
-                    b.ToTable("QuestionResponseDetails");
                 });
 
             modelBuilder.Entity("dhub.Models.Survey", b =>
@@ -194,7 +164,7 @@ namespace dhub.Migrations
                     b.HasOne("dhub.Models.Question", "Question")
                         .WithMany()
                         .HasForeignKey("QuestionID")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("dhub.Models.SurveyResponse", "SurveyResponse")
@@ -206,25 +176,6 @@ namespace dhub.Migrations
                     b.Navigation("Question");
 
                     b.Navigation("SurveyResponse");
-                });
-
-            modelBuilder.Entity("dhub.Models.QuestionResponseDetails", b =>
-                {
-                    b.HasOne("dhub.Models.Question", "Question")
-                        .WithMany()
-                        .HasForeignKey("QuestionID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("dhub.Models.QuestionResponse", "QuestionResponse")
-                        .WithMany()
-                        .HasForeignKey("QuestionResponseID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-
-                    b.Navigation("QuestionResponse");
                 });
 
             modelBuilder.Entity("dhub.Models.SurveyResponse", b =>

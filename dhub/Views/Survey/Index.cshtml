@@ -1,38 +1,70 @@
 ﻿@model IEnumerable<Survey>
+@using dhub.Models
 
 @{
     ViewData["Title"] = "Surveys";
 }
 
-<h2>Surveys</h2>
+<h1>Surveys</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New Survey</a>
-</p>
+<a href="@Url.Action("Create", "Survey")" class="btn btn-primary">Create New Survey</a>
 
-<table class="table">
+<table class="table mt-3">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                Actions
-            </th>
+            <th>Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
-    <tbody>
-        @foreach (var item in Model)
+    <tbody id="surveyTableBody">
+        @foreach (var survey in Model)
         {
-            <tr>
+            <tr data-survey-id="@survey.SurveyID">
+                <td>@survey.Name</td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.SurveyID" class="btn btn-warning">Edit</a>
-                    <a asp-action="Details" asp-route-id="@item.SurveyID" class="btn btn-info">Details</a>
+                    <a href="@Url.Action("Details", "Survey", new { id = survey.SurveyID })" class="btn btn-info">Details</a>
+                    <a href="@Url.Action("Edit", "Survey", new { id = survey.SurveyID })" class="btn btn-warning">Edit</a>
+                    <button class="btn btn-success submit-survey" data-survey-id="@survey.SurveyID">Submit Survey</button>
+                    <a href="@Url.Action("Index", "SurveyResponse", new { id = survey.SurveyID })" class="btn btn-secondary">View Submissions</a>
+                    <button class="btn btn-danger delete-survey">Delete</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.delete-survey').click(function () {
+                var row = $(this).closest('tr');
+                var surveyId = row.data('survey-id');
+
+                if (confirm('Are you sure you want to delete this survey?')) {
+                    console.log("The index view knows the survey id ", surveyId);
+                    $.ajax({
+                        url: '@Url.Action("DeleteConfirmed", "Survey")' + '/' + surveyId,
+                        type: 'POST',
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (result) {
+                            row.remove();
+                        },
+                        error: function (xhr) {
+                            alert('An error occurred while deleting the survey: ' + xhr.responseText);
+                        }
+                    });
+                }
+            });
+
+            $('.submit-survey').click(function () {
+                var surveyId = $(this).data('survey-id');
+                window.location.href = '@Url.Action("Create", "SurveyResponse")' + '/' + surveyId;
+            });
+        });
+    </script>
+}
+
+

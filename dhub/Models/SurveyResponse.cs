@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using dhub.Models;
+using static dhub.Models.ViewModels.SurveyResponseViewModel;
 
 namespace dhub.Models
 {
-
     public class SurveyResponse
     {
         [Key]
@@ -14,11 +13,10 @@ namespace dhub.Models
         public Guid SurveyID { get; set; }
         public Survey Survey { get; set; }
 
-        public DateTime SubmissionDate { get; set; }
+        public DateTime SubmissionDate { get; set; } = DateTime.UtcNow;
 
         
-        public string ResponsesJson { get; set; }
+        public ICollection<QuestionResponse> QuestionResponses { get; set; } = new List<QuestionResponse>();
     }
-
 }
 

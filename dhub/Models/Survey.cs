@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using dhub.Users;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace dhub.Models
 {
@@ -11,8 +13,11 @@ namespace dhub.Models
         [Required]
         public string Name { get; set; }
 
-        public ICollection<Question> Questions { get; set; }
+        public List<Question> Questions { get; set; } = new List<Question>();
 
+        [ForeignKey("ApplicationUser")]
+        public string OwnerId { get; set; }
+        public virtual ApplicationUser Owner { get; set; }
         
     }
 }

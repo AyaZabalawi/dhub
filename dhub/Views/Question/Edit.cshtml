@@ -4,101 +4,82 @@
     ViewData["Title"] = "Edit Question";
 }
 
-<h2>Edit Question</h2>
+<h1>Edit Question</h1>
 
-<form id="edit-question-form">
-    <input type="hidden" asp-for="QuestionID" />
+<form id="editQuestionForm">
+    <input type="hidden" id="QuestionID" name="QuestionID" value="@Model.QuestionID" />
+    <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
 
     <div class="form-group">
-        <label asp-for="QuestionText" class="control-label"></label>
-        <input asp-for="QuestionText" class="form-control" />
-        <span asp-validation-for="QuestionText" class="text-danger"></span>
+        <label for="QuestionText">Question Text</label>
+        <input type="text" class="form-control" id="QuestionText" name="QuestionText" value="@Model.QuestionText" required />
     </div>
-
     <div class="form-group">
-        <label asp-for="IsRequired" class="control-label"></label>
-        <input asp-for="IsRequired" type="checkbox" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="IsHidden" class="control-label"></label>
-        <input asp-for="IsHidden" type="checkbox" />
-    </div>
-
-    <div class="form-group">
-        <label asp-for="QuestionType" class="control-label"></label>
-        <select id="questionType" name="QuestionType" class="form-control">
-            <option value="TextInput">Text Input</option>
-            <option value="Dropdown">Dropdown</option>
-            <option value="RadioButton">Radio Button</option>
-            <option value="MultipleSelect">Multiple Select</option>
+        <label for="QuestionType">Question Type</label>
+        <select class="form-control" id="QuestionType" name="QuestionType" required>
+            <option value="TextInput" data-selected="@Model.QuestionType == QuestionType.TextInput">Text Input</option>
+            <option value="Dropdown" data-selected="@Model.QuestionType == QuestionType.Dropdown">Dropdown</option>
+            <option value="RadioButton" data-selected="@Model.QuestionType == QuestionType.RadioButton">Radio Button</option>
+            <option value="MultipleSelect" data-selected="@Model.QuestionType == QuestionType.MultipleSelect">Multiple Select</option>
         </select>
     </div>
-
-    <div id="options-container" class="form-group">
-        <label>Options</label>
-        <ul>
-            @foreach (var option in Model.Options)
-            {
-                <li>
-                    <input type="text" class="form-control option-input" value="@option" />
-                    <button type="button" class="btn btn-danger btn-sm remove-option">Remove</button>
-                </li>
-            }
-        </ul>
-        <button type="button" class="btn btn-secondary btn-sm" id="add-option">Add Option</button>
+    <div class="form-group" id="optionsContainer" style="@(Model.QuestionType == QuestionType.TextInput ? "display: none;" : "display: block;")">
+        <label for="Options">Options (Comma-separated)</label>
+        <input type="text" class="form-control" id="Options" name="Options" value="@(string.Join(",", Model.Options))" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-success">Save Changes</button>
 </form>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-            $('#questionType').val('@Model.QuestionType.ToString()');
+            var selectedType = '@Model.QuestionType';
+            $('#QuestionType').val(selectedType);
 
-            $('#questionType').change(function () {
-                var selectedType = $(this).val();
-                if (selectedType === 'Dropdown' || selectedType === 'RadioButton' || selectedType === 'MultipleSelect') {
-                    $('#options-container').show();
+            $('#QuestionType').change(function () {
+                var type = $(this).val();
+                var optionsContainer = $('#optionsContainer');
+                if (type === 'Dropdown' || type === 'RadioButton' || type === 'MultipleSelect') {
+                    optionsContainer.show();
                 } else {
-                    $('#options-container').hide();
+                    optionsContainer.hide();
                 }
             });
 
-            $('#add-option').click(function () {
-                $('#options-container ul').append('<li><input type="text" class="form-control option-input" /><button type="button" class="btn btn-danger btn-sm remove-option">Remove</button></li>');
-            });
+            var initialType = $('#QuestionType').val();
+            if (initialType === 'Dropdown' || initialType === 'RadioButton' || initialType === 'MultipleSelect') {
+                $('#optionsContainer').show();
+            } else {
+                $('#optionsContainer').hide();
+            }
 
-            $(document).on('click', '.remove-option', function () {
-                $(this).closest('li').remove();
-            });
-
-            $('#edit-question-form').submit(function (e) {
+            $('#editQuestionForm').submit(function (e) {
                 e.preventDefault();
-                var formData = $(this).serialize();
+
+                var questionData = {
+                    QuestionID: $('#QuestionID').val(),
+                    SurveyID: $('#SurveyID').val(),
+                    QuestionText: $('#QuestionText').val(),
+                    QuestionType: $('#QuestionType').val(),
+                    Options: $('#Options').val().split(',').map(o => o.trim())
+                };
+
                 $.ajax({
-                    url: '@Url.Action("Edit", "Question")',
-                    type: 'POST',
-                    data: formData,
-                    success: function (response) {
-                        alert('Question updated successfully!');
-                        window.location.href = '@Url.Action("Index", "Question")'; 
+                    method: 'POST',
+                    url: '/question/edit/' + $('#QuestionID').val(),
+                    contentType: 'application/json',
+                    data: JSON.stringify(questionData),
+                    success: function () {
+                        window.location.href = '/survey/details/' + $('#SurveyID').val();
                     },
-                    error: function (xhr, status, error) {
-                        alert('Error updating question: ' + error);
+                    error: function (xhr) {
+                        console.log(xhr.responseText);
+                        alert('Error saving question');
                     }
                 });
             });
-
-            var questionType = $('#questionType').val();
-            if (questionType === 'Dropdown' || questionType === 'RadioButton' || questionType === 'MultipleSelect') {
-                $('#options-container').show();
-            } else {
-                $('#options-container').hide();
-            }
         });
     </script>
 }

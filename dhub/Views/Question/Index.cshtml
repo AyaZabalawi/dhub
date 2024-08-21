@@ -42,7 +42,7 @@
                 if (confirm('Are you sure you want to delete this question?')) {
                     $.ajax({
                         url: '@Url.Action("Delete", "Question")/' + questionId,
-                        type: 'POST',
+                        method: 'POST',
                         data: { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
                         success: function () {
                             button.closest('tr').remove();

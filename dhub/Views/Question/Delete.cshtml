@@ -29,7 +29,7 @@
 
                 $.ajax({
                     url: '@Url.Action("Delete", "Question")',
-                    type: 'POST',
+                    method: 'POST',
                     data: formData,
                     success: function (response) {
                         alert('Question deleted successfully!');

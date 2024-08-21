@@ -15,8 +15,9 @@
         <dd class="col-sm-10">@Model.Name</dd>
     </dl>
 
-    <form id="deleteSurveyForm">
-        <input type="hidden" name="SurveyID" value="@Model.SurveyID" />
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.SurveyID" method="post" id="deleteSurveyForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.SurveyID" />
         <button type="submit" class="btn btn-danger">Delete</button>
         <a href="@Url.Action("Index", "Survey")" class="btn btn-secondary">Cancel</a>
     </form>
@@ -29,16 +30,18 @@
             $('#deleteSurveyForm').submit(function (e) {
                 e.preventDefault();
 
+
                 $.ajax({
-                    url: '@Url.Action("Delete", "Survey")',
-                    type: 'POST',
+                    url: '@Url.Action("DeleteConfirmed", "Survey", new { id = Model.SurveyID })',
+                    method: 'POST',
                     data: $(this).serialize(),
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
                     success: function (response) {
                         alert('Survey deleted successfully!');
                         window.location.href = '@Url.Action("Index", "Survey")';
                     },
                     error: function (xhr) {
-                        alert('An error occurred while deleting the survey.');
+                        alert('Cannot delete the survey.');
                     }
                 });
             });

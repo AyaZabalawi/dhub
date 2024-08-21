@@ -1,30 +1,55 @@
 ﻿@model Survey
 
 @{
-    ViewBag.Title = "Survey Details";
+    ViewData["Title"] = "Survey Details";
 }
 
-<h2>Survey Details</h2>
+<h2>@Model.Name</h2>
 
-<div>
-    <h4>@Model.Name</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">Survey Name</dt>
-        <dd class="col-sm-10">@Model.Name</dd>
-    </dl>
+<div id="surveyQuestions">
+    @foreach (var question in Model.Questions)
+    {
+        <div class="question-details">
+            <h4>@question.QuestionText</h4>
 
-    <h5>Questions</h5>
-    <ul>
-        @foreach (var question in Model.Questions)
-        {
-            <li>
-                <strong>@question.QuestionText</strong> (@question.QuestionType) <br />
-                Required: @question.IsRequired, Hidden: @question.IsHidden
-            </li>
-        }
-    </ul>
-
-    <a href="@Url.Action("Edit", "Survey", new { id = Model.SurveyID })" class="btn btn-warning">Edit</a>
-    <a href="@Url.Action("Index", "Survey")" class="btn btn-secondary">Back to List</a>
+            @if (question.QuestionType == dhub.Models.QuestionType.TextInput)
+            {
+                <p>Type: Text Input</p>
+            }
+            else if (question.QuestionType == dhub.Models.QuestionType.Dropdown)
+            {
+                <p>Type: Dropdown</p>
+                <select class="form-control" disabled>
+                    @foreach (var option in question.Options)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            }
+            else if (question.QuestionType == dhub.Models.QuestionType.RadioButton)
+            {
+                <p>Type: Radio Button</p>
+                @foreach (var option in question.Options)
+                {
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" name="question-@question.QuestionID" value="@option" disabled />
+                        <label class="form-check-label">@option</label>
+                    </div>
+                }
+            }
+            else if (question.QuestionType == dhub.Models.QuestionType.MultipleSelect)
+            {
+                <p>Type: Multiple Select</p>
+                <select class="form-control" multiple disabled>
+                    @foreach (var option in question.Options)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+            }
+        </div>
+    }
 </div>
+
+<a href="@Url.Action("Edit", new { id = Model.SurveyID })" class="btn btn-primary">Edit Survey</a>
+<a href="@Url.Action("Index")" class="btn btn-secondary">Back to List</a>

@@ -1,39 +1,51 @@
-﻿@model Question
+﻿@model (Question Question, IEnumerable<QuestionResponse> Responses)
 
 @{
     ViewData["Title"] = "Question Details";
 }
 
-<h1>@Model.QuestionText</h1>
+<h1>@Model.Question.QuestionText</h1>
 
 <div>
-    <dl class="row">
-        <dt class="col-sm-2">Question Type</dt>
-        <dd class="col-sm-10">@Model.QuestionType</dd>
-
-        <dt class="col-sm-2">Is Required</dt>
-        <dd class="col-sm-10">@Model.IsRequired</dd>
-
-        <dt class="col-sm-2">Is Hidden</dt>
-        <dd class="col-sm-10">@Model.IsHidden</dd>
-
-        <dt class="col-sm-2">Options</dt>
-        <dd class="col-sm-10">
-            @if (Model.Options != null && Model.Options.Any())
-            {
-                <ul>
-                    @foreach (var option in Model.Options)
-                    {
-                        <li>@option</li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <span>No Options</span>
-            }
-        </dd>
-    </dl>
+    <h3>Survey Information</h3>
+    <p>Survey ID: @Model.Question.Survey.SurveyID</p>
+    <p>Survey Name: @Model.Question.Survey.Name</p>
 </div>
 
-<a asp-controller="Question" asp-action="Index" class="btn btn-primary">Back to List</a>
+<div>
+    <a href="@Url.Action("Edit", "Question", new { id = Model.Question.QuestionID })" class="btn btn-warning">Edit Question</a>
+    <a href="@Url.Action("Delete", "Question", new { id = Model.Question.QuestionID })" class="btn btn-danger">Delete Question</a>
+</div>
+
+<h2>Responses</h2>
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Response Text</th>
+            <th>Selected Options</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var response in Model.Responses)
+        {
+            <tr>
+                <td>@response.AnswerText</td>
+                <td>
+                    @if (response.SelectedOptions != null && response.SelectedOptions.Any())
+                    {
+                        <ul>
+                            @foreach (var option in response.SelectedOptions)
+                            {
+                                <li>@option.OptionText</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span>No options selected</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

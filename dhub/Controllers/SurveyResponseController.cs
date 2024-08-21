@@ -1,77 +1,42 @@
-﻿using dhub.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-//using dhub.Data;
 using dhub.Models;
-using Newtonsoft.Json;
+using dhub.Data;
+using dhub.Models.ViewModels;
 
 namespace dhub.Controllers
 {
-        [Route("surveyresponse")]
-        public class SurveyResponseController : Controller
+
+    [Route("SurveyResponse")]
+    public class SurveyResponseController : Controller
+    {
+        private readonly AppDbContext _context;
+
+        public SurveyResponseController(AppDbContext context)
         {
-            private readonly AppDbContext _context;
+            _context = context;
+        }
 
-            public SurveyResponseController(AppDbContext context)
-            {
-                _context = context;
-            }
 
-            // GET: surveyresponse/index
-            [HttpGet("index")]
-            public async Task<IActionResult> Index()
-            {
-                var responses = await _context.SurveyResponses.Include(sr => sr.Survey).ToListAsync();
-                return View(responses);
-            }
+        [HttpGet("/Index")]
+        public async Task<IActionResult> Index(Guid id)
+        {
+            var responses = await _context.SurveyResponses
+                .Include(sr => sr.Survey) 
+                .Where(x => x.SurveyID == id)
+                .ToListAsync();
 
-            // GET: surveyresponse/details/5
-            [HttpGet("details/{id}")]
-            public async Task<IActionResult> Details(Guid id)
-            {
-                var response = await _context.SurveyResponses.Include(sr => sr.Survey)
-                    .FirstOrDefaultAsync(sr => sr.ResponseID == id);
-                if (response == null)
-                {
-                    return NotFound();
-                }
-                return View(response);
-            }
+            return View(responses);
+        }
 
-            // POST: surveyresponse/create
-            [HttpPost("create")]
-            [ValidateAntiForgeryToken]
-            public async Task<IActionResult> Create([Bind("ResponseID,SurveyID,Answers")] SurveyResponse response)
-            {
-                if (ModelState.IsValid)
-                {
-                    response.ResponseID = Guid.NewGuid(); // Ensure the ID is set
-                    _context.Add(response);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }
-                return View(response);
-            }
-
-            // GET: surveyresponse/survey/5
-            [HttpGet("survey/{surveyId}")]
-            public async Task<IActionResult> GetResponsesBySurvey(Guid surveyId)
-            {
-                var responses = await _context.SurveyResponses
-                    .Where(sr => sr.SurveyID == surveyId)
-                    .ToListAsync();
-                return View(responses);
-            }
-        
-        [HttpGet("Survey/Submit/{surveyId}")]
-        public async Task<IActionResult> Submit(Guid surveyId)
+        [HttpGet("Create/{surveyId}")]
+        public async Task<IActionResult> Create(Guid surveyId)
         {
             var survey = await _context.Surveys
                 .Include(s => s.Questions)
-                .ThenInclude(q => q.Options)
                 .FirstOrDefaultAsync(s => s.SurveyID == surveyId);
 
             if (survey == null)
@@ -79,38 +44,148 @@ namespace dhub.Controllers
                 return NotFound();
             }
 
-            return View(survey);
-        }
-
-        [HttpPost("Survey/Submit")]
-        public async Task<IActionResult> Submit(SurveyResponseViewModel viewModel)
-        {
-            if (!ModelState.IsValid)
+            var model = new SurveyResponseViewModel
             {
-                return View(viewModel);
-            }
-
-            var serializedResponses = JsonConvert.SerializeObject(viewModel.Responses);
-
-            var response = new SurveyResponse
-            {
-                SurveyID = viewModel.SurveyID,
-                SubmissionDate = DateTime.Now,
-                ResponsesJson = serializedResponses
+                SurveyID = surveyId,
+                Responses = survey.Questions.Select(q => new SurveyResponseViewModel.QuestionResponse
+                {
+                    QuestionID = q.QuestionID,
+                    QuestionText = q.QuestionText,
+                    QuestionType = q.QuestionType,
+                    Options = q.Options
+                }).ToList()
             };
 
-            _context.SurveyResponses.Add(response);
+            return View(model);
+        }
+
+
+        [HttpPost("Create/{surveyId}")]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Create(Guid surveyId, [FromBody] SurveyResponseViewModel model)
+        {
+            if (!ModelState.IsValid || surveyId != model.SurveyID)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var surveyResponse = new SurveyResponse
+            {
+                SurveyID = model.SurveyID,
+                SubmissionDate = DateTime.UtcNow
+            };
+
+            _context.SurveyResponses.Add(surveyResponse);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Index");
-        }
-
-
-
-        private bool SurveyResponseExists(Guid id)
+            var questionResponses = model.Responses.Select(r => new QuestionResponse
             {
-                return _context.SurveyResponses.Any(e => e.ResponseID == id);
-            }
+                QuestionID = r.QuestionID,
+                QuestionText = r.QuestionText,
+                SurveyResponseID = surveyResponse.ResponseID,
+                AnswerText = string.Join(", ", r.Response) 
+            }).ToList();
+
+            _context.QuestionResponses.AddRange(questionResponses);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Survey submitted successfully!" });
         }
+
+
+        [HttpGet("/Details/{id}")]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var response = await _context.SurveyResponses
+                .Include(sr => sr.QuestionResponses)
+                    .ThenInclude(qr => qr.Question)
+                .Include(sr => sr.Survey)
+                .FirstOrDefaultAsync(sr => sr.ResponseID == id);
+
+            if (response == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new SurveyResponseDetailsViewModel
+            {
+                ResponseID = response.ResponseID,
+                SurveyID = response.SurveyID,
+                SubmissionDate = response.SubmissionDate,
+                SurveyName = response.Survey.Name, 
+                QuestionResponses = response.QuestionResponses.Select(qr => new QuestionResponseDetails
+                {
+                    QuestionResponseID = qr.QuestionResponseID,
+                    QuestionID = qr.QuestionID,
+                    QuestionText = qr.Question.QuestionText,
+                    AnswerText = qr.AnswerText
+                }).ToList()
+            };
+
+            return View(viewModel);
+        }
+
+
+
+
+        [HttpPost("/Submit")]
+        public async Task<IActionResult> Submit([FromBody] SurveyResponseViewModel viewModel)
+        {
+            if (viewModel == null)
+            {
+                return BadRequest("SurveyResponseViewModel cannot be null.");
+            }
+
+            var surveyResponse = new SurveyResponse
+            {
+                ResponseID = Guid.NewGuid(),
+                SurveyID = viewModel.SurveyID,
+                SubmissionDate = DateTime.UtcNow
+            };
+
+            foreach (var response in viewModel.Responses)
+            {
+                var answerText = response.Response != null ? string.Join(", ", response.Response) : string.Empty;
+
+                var questionResponse = new QuestionResponse
+                {
+                    QuestionResponseID = Guid.NewGuid(),
+                    SurveyResponseID = surveyResponse.ResponseID,
+                    QuestionID = response.QuestionID,
+                    QuestionText = response.QuestionText,
+                    AnswerText = answerText
+                };
+
+                _context.QuestionResponses.Add(questionResponse);
+            }
+
+            _context.SurveyResponses.Add(surveyResponse);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Survey submitted successfully!" });
+        }
+
+        [HttpPost("/Delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var response = await _context.SurveyResponses
+                .Include(sr => sr.QuestionResponses)
+                .FirstOrDefaultAsync(sr => sr.ResponseID == id);
+
+            if (response == null)
+            {
+                return NotFound();
+            }
+
+            _context.QuestionResponses.RemoveRange(response.QuestionResponses);
+
+            _context.SurveyResponses.Remove(response);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", new { id = response.SurveyID });
+        }
+
     }
 
+}

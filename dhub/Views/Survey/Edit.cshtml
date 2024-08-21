@@ -1,89 +1,152 @@
-﻿@model Survey
+﻿@model dhub.Models.Survey
 
-@{
-    ViewData["Title"] = "Edit Survey";
-}
-
-<h2>Edit Survey</h2>
-
-<form asp-action="Edit" method="post">
+<form id="editSurveyForm">
+    <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
     <div class="form-group">
-        <label asp-for="Name" class="control-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+        <label for="Name">Survey Name</label>
+        <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required />
     </div>
 
-    <div id="questions-list">
-        @{
-            var questions = Model.Questions.ToList(); 
-        }
-
-        @for (int i = 0; i < questions.Count; i++)
+    <div id="questionsContainer">
+        @for (int i = 0; i < Model.Questions.Count; i++)
         {
-            <div class="form-group">
-                <label>Question @(i + 1)</label>
-                <input type="hidden" name="Questions[@i].QuestionID" value="@questions[i].QuestionID" />
-
-                <label>Question Text</label>
-                <input name="Questions[@i].QuestionText" class="form-control" value="@questions[i].QuestionText" />
-
-                <label>Is Required</label>
-                <input type="checkbox" name="Questions[@i].IsRequired" @(questions[i].IsRequired ? "checked" : "") />
-
-                <label>Is Hidden</label>
-                <input type="checkbox" name="Questions[@i].IsHidden" @(questions[i].IsHidden ? "checked" : "") />
-
-                <label>Question Type</label>
-                <select id="questionType-@i" name="Questions[@i].QuestionType" class="form-control">
-                    <option value="TextInput" @(questions[i].QuestionType == QuestionType.TextInput ? "selected" : "")>Text Input</option>
-                    <option value="Dropdown" @(questions[i].QuestionType == QuestionType.Dropdown ? "selected" : "")>Dropdown</option>
-                    <option value="RadioButton" @(questions[i].QuestionType == QuestionType.RadioButton ? "selected" : "")>Radio Button</option>
-                    <option value="MultipleSelect" @(questions[i].QuestionType == QuestionType.MultipleSelect ? "selected" : "")>Multiple Select</option>
-                </select>
-
-                <div class="form-group" id="options-container-@i">
-                    <label>Options</label>
-                    <ul>
-                        @for (int j = 0; j < questions[i].Options.Length; j++)
-                        {
-                            <li>
-                                <input type="text" class="form-control" name="Questions[@i].Options[@j]" value="@questions[i].Options[j]" />
-                                <button type="button" class="btn btn-danger btn-sm remove-option">Remove</button>
-                            </li>
-                        }
-                    </ul>
-                    <button type="button" class="btn btn-secondary btn-sm add-option" data-question-index="@i">Add Option</button>
+            var question = Model.Questions[i];
+            <div class="question-form" id="question-@i">
+                <h4>Question @i</h4>
+                <div class="form-group">
+                    <label for="QuestionText-@i">Question Text</label>
+                    <input type="text" class="form-control" id="QuestionText-@i" name="Questions[@i].QuestionText" value="@question.QuestionText" required />
                 </div>
+                <div class="form-group">
+                    <label for="QuestionType-@i">Question Type</label>
+                    <select class="form-control" id="QuestionType-@i" name="Questions[@i].QuestionType" data-initial-type="@question.QuestionType" required>
+                        <option value="TextInput" data-type="TextInput">Text Input</option>
+                        <option value="Dropdown" data-type="Dropdown">Dropdown</option>
+                        <option value="RadioButton" data-type="RadioButton">Radio Button</option>
+                        <option value="MultipleSelect" data-type="MultipleSelect">Multiple Select</option>
+                    </select>
+                </div>
+                <div class="form-group" id="optionsContainer-@i" style="display: @(question.QuestionType == dhub.Models.QuestionType.TextInput ? "none" : "block")">
+                    <label for="Options-@i">Options (Comma-separated)</label>
+                    <input type="text" class="form-control" id="Options-@i" name="Questions[@i].Options" value="@(string.Join(",", question.Options))" />
+                </div>
+                <button type="button" class="btn btn-danger remove-question" data-question-index="@i">Remove Question</button>
             </div>
         }
     </div>
 
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <button type="button" id="addQuestion" class="btn btn-primary">Add Question</button>
+    <button type="submit" class="btn btn-success">Save Changes</button>
 </form>
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
-           
-            $('select[id^="questionType-"]').each(function () {
+            var questionIndex = @Model.Questions.Count;
+
+            function addQuestionForm() {
+                var questionFormHtml = `
+                            <div class="question-form" id="question-${questionIndex}">
+                                <h4>Question ${questionIndex + 1}</h4>
+                                <div class="form-group">
+                                    <label for="QuestionText-${questionIndex}">Question Text</label>
+                                    <input type="text" class="form-control" id="QuestionText-${questionIndex}" name="Questions[${questionIndex}].QuestionText" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="QuestionType-${questionIndex}">Question Type</label>
+                                    <select class="form-control" id="QuestionType-${questionIndex}" name="Questions[${questionIndex}].QuestionType" data-initial-type="TextInput" required>
+                                        <option value="TextInput">Text Input</option>
+                                        <option value="Dropdown">Dropdown</option>
+                                        <option value="RadioButton">Radio Button</option>
+                                        <option value="MultipleSelect">Multiple Select</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="optionsContainer-${questionIndex}" style="display: none;">
+                                    <label for="Options-${questionIndex}">Options (Comma-separated)</label>
+                                    <input type="text" class="form-control" id="Options-${questionIndex}" name="Questions[${questionIndex}].Options" />
+                                </div>
+                                <button type="button" class="btn btn-danger remove-question" data-question-index="${questionIndex}">Remove Question</button>
+                            </div>
+                        `;
+                $('#questionsContainer').append(questionFormHtml);
+                questionIndex++;
+            }
+
+            $('#addQuestion').click(function () {
+                addQuestionForm();
+            });
+
+            $(document).on('change', '[id^="QuestionType-"]', function () {
                 var index = $(this).attr('id').split('-')[1];
-                $(this).val($(this).find('option:selected').val());
+                var type = $(this).val();
+                var optionsContainer = $('#optionsContainer-' + index);
+                if (type === 'Dropdown' || type === 'RadioButton' || type === 'MultipleSelect') {
+                    optionsContainer.show();
+                } else {
+                    optionsContainer.hide();
+                }
             });
 
-           
-            $('.add-option').click(function () {
+            $(document).on('click', '.remove-question', function () {
                 var index = $(this).data('question-index');
-                var optionsContainer = $('#options-container-' + index + ' ul');
-                var optionCount = optionsContainer.children('li').length;
-                optionsContainer.append('<li><input type="text" class="form-control" name="Questions[' + index + '].Options[' + optionCount + ']" /><button type="button" class="btn btn-danger btn-sm remove-option">Remove</button></li>');
+                $('#question-' + index).remove();
             });
 
-            
-            $(document).on('click', '.remove-option', function () {
-                $(this).closest('li').remove();
+            function setInitialQuestionTypes() {
+                $('[id^="QuestionType-"]').each(function () {
+                    var initialType = $(this).data('initial-type');
+                    if (initialType === 'Dropdown' || initialType === 'RadioButton' || initialType === 'MultipleSelect') {
+                        $('#optionsContainer-' + $(this).attr('id').split('-')[1]).show();
+                    } else {
+                        $('#optionsContainer-' + $(this).attr('id').split('-')[1]).hide();
+                    }
+                });
+            }
+
+            $('#editSurveyForm').submit(function (e) {
+                e.preventDefault();
+
+                var surveyData = {
+                    SurveyID: $('#SurveyID').val(),
+                    Name: $('#Name').val(),
+                    Questions: gatherQuestions()
+                };
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/survey/edit/' + $('#SurveyID').val(),
+                    contentType: 'application/json',
+                    data: JSON.stringify(surveyData),
+                    success: function () {
+                        window.location.href = '/survey/index';
+                    },
+                    error: function (xhr) {
+                        console.log(xhr.responseText);
+                        alert('Error saving survey');
+                    }
+                });
             });
+
+            function gatherQuestions() {
+                var questions = [];
+                $('#questionsContainer .question-form').each(function () {
+                    var index = $(this).attr('id').split('-')[1];
+                    var questionText = $(`#QuestionText-${index}`).val();
+                    var questionType = $(`#QuestionType-${index}`).val();
+                    var optionsString = $(`#Options-${index}`).val();
+                    var optionsArray = optionsString ? optionsString.split(',').map(o => o.trim()) : [];
+
+                    questions.push({
+                        QuestionText: questionText,
+                        QuestionType: questionType,
+                        Options: optionsArray
+                    });
+                });
+                return questions;
+            }
+
+            setInitialQuestionTypes();  
         });
     </script>
 }
