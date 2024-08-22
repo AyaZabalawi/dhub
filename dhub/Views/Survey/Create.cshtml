@@ -1,16 +1,23 @@
 ﻿@model Survey
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 
 @{
     ViewData["Title"] = "Create Survey";
 }
 
-<h2>Create Survey</h2>
+<h2>@ViewData["Title"]</h2>
 
 <form id="createSurveyForm">
+    <input type="hidden" asp-for="OwnerId"/>
+    <input type="hidden" asp-for="FullName"/>
+    <input type="hidden" asp-for="Owner"/>
+
     <div class="form-group">
         <label for="Name">Survey Name</label>
         <input type="text" class="form-control" id="Name" name="Name" required />
     </div>
+
 
     <div id="questionsContainer">
         <!-- dynamic question addition -->
@@ -20,100 +27,104 @@
     <button type="submit" class="btn btn-success">Save Survey</button>
 </form>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function () {
-        var questionIndex = 0;
+@section Scripts
+{
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var questionIndex = 0;
 
-        function addQuestionForm() {
-            var questionFormHtml = `
-                        <div class="question-form" id="question-${questionIndex}">
-                            <h4>Question ${questionIndex + 1}</h4>
-                            <div class="form-group">
-                                <label for="QuestionText-${questionIndex}">Question Text</label>
-                                <input type="text" class="form-control" id="QuestionText-${questionIndex}" name="Questions[${questionIndex}].QuestionText" required />
-                            </div>
-                            <div class="form-group">
-                                <label for="QuestionType-${questionIndex}">Question Type</label>
-                                <select class="form-control" id="QuestionType-${questionIndex}" name="Questions[${questionIndex}].QuestionType" required>
-                                    <option value="TextInput">Text Input</option>
-                                    <option value="Dropdown">Dropdown</option>
-                                    <option value="RadioButton">Radio Button</option>
-                                    <option value="MultipleSelect">Multiple Select</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="optionsContainer-${questionIndex}" style="display:none;">
-                                <label>Options (Comma-separated)</label>
-                                <input type="text" class="form-control" id="Options-${questionIndex}" name="Questions[${questionIndex}].Options" />
-                            </div>
-                            <button type="button" class="btn btn-danger remove-question" data-question-index="${questionIndex}">Remove Question</button>
-                        </div>
-                    `;
-            $('#questionsContainer').append(questionFormHtml);
-            questionIndex++;
-        }
-
-        $('#addQuestion').click(function () {
-            addQuestionForm();
-        });
-
-        $(document).on('change', '[id^="QuestionType-"]', function () {
-            var index = $(this).attr('id').split('-')[1];
-            var type = $(this).val();
-            var optionsContainer = $('#optionsContainer-' + index);
-            if (type === 'Dropdown' || type === 'RadioButton' || type === 'MultipleSelect') {
-                optionsContainer.show();
-            } else {
-                optionsContainer.hide();
+            function addQuestionForm() {
+                var questionFormHtml = `
+                                            <div class="question-form" id="question-${questionIndex}">
+                                                <h4>Question ${questionIndex + 1}</h4>
+                                                <div class="form-group">
+                                                    <label for="QuestionText-${questionIndex}">Question Text</label>
+                                                    <input type="text" class="form-control" id="QuestionText-${questionIndex}" name="Questions[${questionIndex}].QuestionText" required />
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="QuestionType-${questionIndex}">Question Type</label>
+                                                    <select class="form-control" id="QuestionType-${questionIndex}" name="Questions[${questionIndex}].QuestionType" required>
+                                                        <option value="TextInput">Text Input</option>
+                                                        <option value="Dropdown">Dropdown</option>
+                                                        <option value="RadioButton">Radio Button</option>
+                                                        <option value="MultipleSelect">Multiple Select</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group" id="optionsContainer-${questionIndex}" style="display:none;">
+                                                    <label for="Options-${questionIndex}">Options (Comma-separated)</label>
+                                                    <input type="text" class="form-control" id="Options-${questionIndex}" name="Questions[${questionIndex}].Options" />
+                                                </div>
+                                                <button type="button" class="btn btn-danger remove-question" data-question-index="${questionIndex}">Remove Question</button>
+                                            </div>
+                                        `;
+                $('#questionsContainer').append(questionFormHtml);
+                questionIndex++;
             }
-        });
 
-        $(document).on('click', '.remove-question', function () {
-            var index = $(this).data('question-index');
-            $('#question-' + index).remove();
-        });
-
-        function gatherQuestions() {
-            var questions = [];
-            $('#questionsContainer .question-form').each(function () {
-                var index = $(this).attr('id').split('-')[1];
-                var questionText = $(`#QuestionText-${index}`).val();
-                var questionType = $(`#QuestionType-${index}`).val();
-                var optionsString = $(`#Options-${index}`).val();
-                var optionsArray = optionsString ? optionsString.split(',').map(o => o.trim()) : [];
-
-                questions.push({
-                    QuestionText: questionText,
-                    QuestionType: questionType,
-                    Options: optionsArray
-                });
+            $('#addQuestion').click(function () {
+                addQuestionForm();
             });
-            return questions;
-        }
 
-        $('#createSurveyForm').submit(function (e) {
-            e.preventDefault();
-
-            var surveyData = {
-                Name: $('#Name').val(),
-                Questions: gatherQuestions()
-            };
-
-            console.log("Survey Data: ", surveyData);
-
-            $.ajax({
-                // method: 'POST',
-                url: '/api/survey/create',
-                contentType: 'application/json',
-                data: JSON.stringify(surveyData),
-                success: function () {
-                    window.location.href = '/survey/index';
-                },
-                error: function (xhr) {
-                    console.log(xhr.responseText);
-                    alert('Error saving survey');
+            $(document).on('change', '[id^="QuestionType-"]', function () {
+                var index = $(this).attr('id').split('-')[1];
+                var type = $(this).val();
+                var optionsContainer = $('#optionsContainer-' + index);
+                if (type === 'Dropdown' || type === 'RadioButton' || type === 'MultipleSelect') {
+                    optionsContainer.show();
+                } else {
+                    optionsContainer.hide();
                 }
             });
+
+            $(document).on('click', '.remove-question', function () {
+                var index = $(this).data('question-index');
+                $('#question-' + index).remove();
+            });
+
+            function gatherQuestions() {
+                var questions = [];
+                $('#questionsContainer .question-form').each(function () {
+                    var index = $(this).attr('id').split('-')[1];
+                    var questionText = $(`#QuestionText-${index}`).val();
+                    var questionType = $(`#QuestionType-${index}`).val();
+                    var optionsString = $(`#Options-${index}`).val();
+                    var optionsArray = optionsString ? optionsString.split(',').map(o => o.trim()) : [];
+
+                    questions.push({
+                        QuestionText: questionText,
+                        QuestionType: questionType,
+                        Options: optionsArray
+                    });
+                });
+                return questions;
+            }
+
+            $('#createSurveyForm').submit(function (e) {
+                e.preventDefault();
+
+                var surveyDate = {
+                    Name: $('#Name').val(),
+                    Questions: gatherQuestions(),
+                    FullName: "aya"
+                };
+
+
+                $.ajax({
+                    method: 'POST',
+                    url: '/survey/create',
+                    data: { survey: surveyDate },
+                    success: function (data) {
+                        window.location.href = '/survey/index';
+                    },
+                    error: function (xhr) {
+                        console.log(xhr.responseText);
+                        alert('Error saving survey');
+                    }
+                });
+            });
         });
-    });
-</script>
+    </script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+}

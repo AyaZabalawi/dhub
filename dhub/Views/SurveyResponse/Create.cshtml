@@ -8,6 +8,7 @@
 
 <form id="surveyResponseForm">
     <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
+    <input type="hidden" id="SubmittedBy" name="SubmittedBy" value="@User.Identity.Name" />
 
     @for (var i = 0; i < Model.Responses.Count; i++)
     {
@@ -65,8 +66,10 @@
 
                 var surveyData = {
                     SurveyID: $('input[name="SurveyID"]').val(),
+                    SubmittedBy: $('#SubmittedBy').val(),
                     Responses: []
                 };
+
 
                 $('#surveyResponseForm .question-container').each(function () {
                     var questionContainer = $(this);
@@ -120,4 +123,6 @@
         });
 
     </script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 }

@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace dhub.Controllers
 {
-
     [Route("question")]
     public class QuestionController : Controller
     {
         private readonly AppDbContext _context;
-
-        public QuestionController(AppDbContext context)
+        private readonly ILogger<QuestionController> _logger;
+        public QuestionController(AppDbContext context, ILogger<QuestionController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet("index")]
@@ -63,14 +63,16 @@ namespace dhub.Controllers
 
                 if (survey == null)
                 {
+                    _logger.LogWarning("Attempting to add questions to a survey that does not exist.");
                     return BadRequest(new { error = "Invalid SurveyID. The survey does not exist." });
                 }
 
                 question.Survey = survey;
-
+              
                 question.QuestionID = Guid.NewGuid();
 
                 _context.Add(question);
+                _logger.LogInformation("Question added to survey");
                 await _context.SaveChangesAsync();
 
                 return Ok(question);
@@ -95,11 +97,13 @@ namespace dhub.Controllers
         {
             if (id != question.QuestionID)
             {
+                _logger.LogWarning("The question you are trying to edit was not found.");
                 return NotFound();
             }
 
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("You did not provide all/the correct fields needed for this operation.");
                 return BadRequest(ModelState);
             }
 
@@ -142,6 +146,7 @@ namespace dhub.Controllers
             {
                 _context.Questions.Remove(question);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Question removed.");
             }
             return RedirectToAction(nameof(Index));
         }

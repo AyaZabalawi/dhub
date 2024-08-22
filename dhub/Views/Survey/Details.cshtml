@@ -1,55 +1,84 @@
 ﻿@model Survey
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 
 @{
     ViewData["Title"] = "Survey Details";
+
+    var isAuthorized = await AuthorizationService.AuthorizeAsync(User, "ViewSurveyPolicy");
 }
 
-<h2>@Model.Name</h2>
+@if (!isAuthorized.Succeeded)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to view this survey.
+    </div>
+    <a href="@Url.Action("Index", "Survey")" class="btn btn-primary">Back to List</a>
+}
+else
+{
+    <h2>@Model.Name</h2>
 
-<div id="surveyQuestions">
-    @foreach (var question in Model.Questions)
-    {
-        <div class="question-details">
-            <h4>@question.QuestionText</h4>
+    <dl class="row">
+        <dt class="col-sm-3">Owner</dt>
+        <dd class="col-sm-9">@Model.Owner</dd>
 
-            @if (question.QuestionType == dhub.Models.QuestionType.TextInput)
-            {
-                <p>Type: Text Input</p>
-            }
-            else if (question.QuestionType == dhub.Models.QuestionType.Dropdown)
-            {
-                <p>Type: Dropdown</p>
-                <select class="form-control" disabled>
-                    @foreach (var option in question.Options)
-                    {
-                        <option value="@option">@option</option>
-                    }
-                </select>
-            }
-            else if (question.QuestionType == dhub.Models.QuestionType.RadioButton)
-            {
-                <p>Type: Radio Button</p>
-                @foreach (var option in question.Options)
+        <dt class="col-sm-3">Owner ID</dt>
+        <dd class="col-sm-9">@Model.OwnerId</dd>
+    </dl>
+
+    <div id="surveyQuestions">
+        @foreach (var question in Model.Questions)
+        {
+            <div class="question-details">
+                <h4>@question.QuestionText</h4>
+
+                @if (question.QuestionType == dhub.Models.QuestionType.TextInput)
                 {
-                    <div class="form-check">
-                        <input type="radio" class="form-check-input" name="question-@question.QuestionID" value="@option" disabled />
-                        <label class="form-check-label">@option</label>
-                    </div>
+                    <p>Type: Text Input</p>
                 }
-            }
-            else if (question.QuestionType == dhub.Models.QuestionType.MultipleSelect)
-            {
-                <p>Type: Multiple Select</p>
-                <select class="form-control" multiple disabled>
+                else if (question.QuestionType == dhub.Models.QuestionType.Dropdown)
+                {
+                    <p>Type: Dropdown</p>
+                    <select class="form-control" disabled>
+                        @foreach (var option in question.Options)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                }
+                else if (question.QuestionType == dhub.Models.QuestionType.RadioButton)
+                {
+                    <p>Type: Radio Button</p>
                     @foreach (var option in question.Options)
                     {
-                        <option value="@option">@option</option>
+                        <div class="form-check">
+                            <input type="radio" class="form-check-input" name="question-@question.QuestionID" value="@option" disabled />
+                            <label class="form-check-label">@option</label>
+                        </div>
                     }
-                </select>
-            }
-        </div>
-    }
-</div>
+                }
+                else if (question.QuestionType == dhub.Models.QuestionType.MultipleSelect)
+                {
+                    <p>Type: Multiple Select</p>
+                    <select class="form-control" multiple disabled>
+                        @foreach (var option in question.Options)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                }
+            </div>
+        }
+    </div>
 
-<a href="@Url.Action("Edit", new { id = Model.SurveyID })" class="btn btn-primary">Edit Survey</a>
-<a href="@Url.Action("Index")" class="btn btn-secondary">Back to List</a>
+    <a href="@Url.Action("Index", "Survey")" class="btn btn-primary">Back to List</a>
+}
+
+@section Scripts
+{
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.6.0.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+}

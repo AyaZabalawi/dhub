@@ -1,43 +1,72 @@
 ﻿@model dhub.Models.Survey
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 
-<form id="editSurveyForm">
-    <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
-    <div class="form-group">
-        <label for="Name">Survey Name</label>
-        <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required />
+@{
+    ViewData["Title"] = "Edit Survey";
+    var isAuthorized = await AuthorizationService.AuthorizeAsync(User, "EditSurveyPolicy");
+}
+
+@if (!isAuthorized.Succeeded)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to edit this survey.
     </div>
+    <a href="@Url.Action("Index", "Survey")" class="btn btn-primary">Back to List</a>
+}
+else
+{
+    <h2>Edit Survey</h2>
+    <form id="editSurveyForm">
+        <input type="hidden" id="SurveyID" name="SurveyID" value="@Model.SurveyID" />
 
-    <div id="questionsContainer">
-        @for (int i = 0; i < Model.Questions.Count; i++)
-        {
-            var question = Model.Questions[i];
-            <div class="question-form" id="question-@i">
-                <h4>Question @i</h4>
-                <div class="form-group">
-                    <label for="QuestionText-@i">Question Text</label>
-                    <input type="text" class="form-control" id="QuestionText-@i" name="Questions[@i].QuestionText" value="@question.QuestionText" required />
-                </div>
-                <div class="form-group">
-                    <label for="QuestionType-@i">Question Type</label>
-                    <select class="form-control" id="QuestionType-@i" name="Questions[@i].QuestionType" data-initial-type="@question.QuestionType" required>
-                        <option value="TextInput" data-type="TextInput">Text Input</option>
-                        <option value="Dropdown" data-type="Dropdown">Dropdown</option>
-                        <option value="RadioButton" data-type="RadioButton">Radio Button</option>
-                        <option value="MultipleSelect" data-type="MultipleSelect">Multiple Select</option>
-                    </select>
-                </div>
-                <div class="form-group" id="optionsContainer-@i" style="display: @(question.QuestionType == dhub.Models.QuestionType.TextInput ? "none" : "block")">
-                    <label for="Options-@i">Options (Comma-separated)</label>
-                    <input type="text" class="form-control" id="Options-@i" name="Questions[@i].Options" value="@(string.Join(",", question.Options))" />
-                </div>
-                <button type="button" class="btn btn-danger remove-question" data-question-index="@i">Remove Question</button>
-            </div>
-        }
-    </div>
+        <div class="form-group">
+            <label for="Name">Survey Name</label>
+            <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required />
+        </div>
 
-    <button type="button" id="addQuestion" class="btn btn-primary">Add Question</button>
-    <button type="submit" class="btn btn-success">Save Changes</button>
-</form>
+        <div class="form-group">
+            <label for="OwnerId">Owner ID</label>
+            <input type="text" class="form-control" id="OwnerId" name="OwnerId" value="@Model.OwnerId" disabled />
+        </div>
+
+        <div class="form-group">
+            <label for="Owner">Owner Name</label>
+            <input type="text" class="form-control" id="Owner" name="Owner" value="@Model.FullName"  disabled />
+        </div>
+
+        <div id="questionsContainer">
+            @for (int i = 0; i < Model.Questions.Count; i++)
+            {
+                var question = Model.Questions[i];
+                <div class="question-form" id="question-@i">
+                    <h4>Question @i</h4>
+                    <div class="form-group">
+                        <label for="QuestionText-@i">Question Text</label>
+                        <input type="text" class="form-control" id="QuestionText-@i" name="Questions[@i].QuestionText" value="@question.QuestionText" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="QuestionType-@i">Question Type</label>
+                        <select class="form-control" id="QuestionType-@i" name="Questions[@i].QuestionType" data-initial-type="@question.QuestionType" required>
+                            <option value="TextInput" data-type="TextInput">Text Input</option>
+                            <option value="Dropdown" data-type="Dropdown">Dropdown</option>
+                            <option value="RadioButton" data-type="RadioButton">Radio Button</option>
+                            <option value="MultipleSelect" data-type="MultipleSelect">Multiple Select</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="optionsContainer-@i" style="display: @(question.QuestionType == dhub.Models.QuestionType.TextInput ? "none" : "block")">
+                        <label for="Options-@i">Options (Comma-separated)</label>
+                        <input type="text" class="form-control" id="Options-@i" name="Questions[@i].Options" value="@(string.Join(",", question.Options))" />
+                    </div>
+                    <button type="button" class="btn btn-danger remove-question" data-question-index="@i">Remove Question</button>
+                </div>
+            }
+        </div>
+
+        <button type="button" id="addQuestion" class="btn btn-primary">Add Question</button>
+        <button type="submit" class="btn btn-success">Save Changes</button>
+    </form>
+}
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -47,28 +76,28 @@
 
             function addQuestionForm() {
                 var questionFormHtml = `
-                            <div class="question-form" id="question-${questionIndex}">
-                                <h4>Question ${questionIndex + 1}</h4>
-                                <div class="form-group">
-                                    <label for="QuestionText-${questionIndex}">Question Text</label>
-                                    <input type="text" class="form-control" id="QuestionText-${questionIndex}" name="Questions[${questionIndex}].QuestionText" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="QuestionType-${questionIndex}">Question Type</label>
-                                    <select class="form-control" id="QuestionType-${questionIndex}" name="Questions[${questionIndex}].QuestionType" data-initial-type="TextInput" required>
-                                        <option value="TextInput">Text Input</option>
-                                        <option value="Dropdown">Dropdown</option>
-                                        <option value="RadioButton">Radio Button</option>
-                                        <option value="MultipleSelect">Multiple Select</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" id="optionsContainer-${questionIndex}" style="display: none;">
-                                    <label for="Options-${questionIndex}">Options (Comma-separated)</label>
-                                    <input type="text" class="form-control" id="Options-${questionIndex}" name="Questions[${questionIndex}].Options" />
-                                </div>
-                                <button type="button" class="btn btn-danger remove-question" data-question-index="${questionIndex}">Remove Question</button>
-                            </div>
-                        `;
+                                    <div class="question-form" id="question-${questionIndex}">
+                                        <h4>Question ${questionIndex + 1}</h4>
+                                        <div class="form-group">
+                                            <label for="QuestionText-${questionIndex}">Question Text</label>
+                                            <input type="text" class="form-control" id="QuestionText-${questionIndex}" name="Questions[${questionIndex}].QuestionText" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="QuestionType-${questionIndex}">Question Type</label>
+                                            <select class="form-control" id="QuestionType-${questionIndex}" name="Questions[${questionIndex}].QuestionType" data-initial-type="TextInput" required>
+                                                <option value="TextInput">Text Input</option>
+                                                <option value="Dropdown">Dropdown</option>
+                                                <option value="RadioButton">Radio Button</option>
+                                                <option value="MultipleSelect">Multiple Select</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" id="optionsContainer-${questionIndex}" style="display: none;">
+                                            <label for="Options-${questionIndex}">Options (Comma-separated)</label>
+                                            <input type="text" class="form-control" id="Options-${questionIndex}" name="Questions[${questionIndex}].Options" />
+                                        </div>
+                                        <button type="button" class="btn btn-danger remove-question" data-question-index="${questionIndex}">Remove Question</button>
+                                    </div>
+                                `;
                 $('#questionsContainer').append(questionFormHtml);
                 questionIndex++;
             }
@@ -110,6 +139,8 @@
                 var surveyData = {
                     SurveyID: $('#SurveyID').val(),
                     Name: $('#Name').val(),
+                    OwnerId: $('#OwnerId').val(),
+                    Owner: $('#Owner').val(),
                     Questions: gatherQuestions()
                 };
 
@@ -146,7 +177,11 @@
                 return questions;
             }
 
-            setInitialQuestionTypes();  
+            setInitialQuestionTypes();
         });
+
     </script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 }

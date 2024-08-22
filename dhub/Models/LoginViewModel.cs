@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace dhub.Models.ViewModels
+namespace dhub.Models
 {
     public class LoginViewModel
     {

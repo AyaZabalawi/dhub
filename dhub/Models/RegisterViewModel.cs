@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace dhub.Models.ViewModels
+namespace dhub.Models
 {
     public class RegisterViewModel
     {
@@ -14,7 +14,9 @@ namespace dhub.Models.ViewModels
 
         [Required]
         [DataType(DataType.Password)]
-        [Compare("Password")]
+        [Compare("Password", ErrorMessage ="The passwords do not match.")]
         public string ConfirmPassword { get; set; }
+
+        public string FullName { get; set; }
     }
 }

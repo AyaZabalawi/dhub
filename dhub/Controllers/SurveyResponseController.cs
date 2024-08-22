@@ -5,19 +5,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using dhub.Models;
 using dhub.Data;
-using dhub.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace dhub.Controllers
 {
-
     [Route("SurveyResponse")]
     public class SurveyResponseController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<SurveyResponseController> _logger;
 
-        public SurveyResponseController(AppDbContext context)
+        public SurveyResponseController(AppDbContext context, ILogger<SurveyResponseController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
 
@@ -69,10 +71,13 @@ namespace dhub.Controllers
                 return BadRequest(ModelState);
             }
 
+            var userName = User.Identity.Name;
+
             var surveyResponse = new SurveyResponse
             {
                 SurveyID = model.SurveyID,
-                SubmissionDate = DateTime.UtcNow
+                SubmissionDate = DateTime.UtcNow,
+                SubmittedBy = userName 
             };
 
             _context.SurveyResponses.Add(surveyResponse);
@@ -83,7 +88,7 @@ namespace dhub.Controllers
                 QuestionID = r.QuestionID,
                 QuestionText = r.QuestionText,
                 SurveyResponseID = surveyResponse.ResponseID,
-                AnswerText = string.Join(", ", r.Response) 
+                AnswerText = string.Join(", ", r.Response)
             }).ToList();
 
             _context.QuestionResponses.AddRange(questionResponses);
@@ -125,9 +130,6 @@ namespace dhub.Controllers
             return View(viewModel);
         }
 
-
-
-
         [HttpPost("/Submit")]
         public async Task<IActionResult> Submit([FromBody] SurveyResponseViewModel viewModel)
         {
@@ -136,11 +138,19 @@ namespace dhub.Controllers
                 return BadRequest("SurveyResponseViewModel cannot be null.");
             }
 
+            var userName = User.Identity.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+                _logger.LogWarning("User.Identity.Name is null or empty.");
+                return BadRequest("User is not authenticated or the user name is not available.");
+            }
+
             var surveyResponse = new SurveyResponse
             {
                 ResponseID = Guid.NewGuid(),
                 SurveyID = viewModel.SurveyID,
-                SubmissionDate = DateTime.UtcNow
+                SubmissionDate = DateTime.UtcNow,
+                SubmittedBy = userName 
             };
 
             foreach (var response in viewModel.Responses)
@@ -160,10 +170,22 @@ namespace dhub.Controllers
             }
 
             _context.SurveyResponses.Add(surveyResponse);
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while saving the survey response.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Internal server error");
+            }
 
             return Ok(new { message = "Survey submitted successfully!" });
         }
+
+
+
 
         [HttpPost("/Delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -185,7 +207,5 @@ namespace dhub.Controllers
 
             return RedirectToAction("Index", new { id = response.SurveyID });
         }
-
     }
-
 }

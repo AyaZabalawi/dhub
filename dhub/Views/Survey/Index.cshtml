@@ -1,37 +1,51 @@
 ﻿@model IEnumerable<Survey>
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 @using dhub.Models
 
 @{
     ViewData["Title"] = "Surveys";
+    var isAuthorized = await AuthorizationService.AuthorizeAsync(User, "ManageSurveysPolicy");
 }
 
-<h1>Surveys</h1>
 
-<a href="@Url.Action("Create", "Survey")" class="btn btn-primary">Create New Survey</a>
+@if (!isAuthorized.Succeeded)
+{
+    <div class="alert alert-danger" role="alert">
+        You do not have permission to manage surveys.
+    </div>
+}
 
-<table class="table mt-3">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="surveyTableBody">
-        @foreach (var survey in Model)
-        {
-            <tr data-survey-id="@survey.SurveyID">
-                <td>@survey.Name</td>
-                <td>
-                    <a href="@Url.Action("Details", "Survey", new { id = survey.SurveyID })" class="btn btn-info">Details</a>
-                    <a href="@Url.Action("Edit", "Survey", new { id = survey.SurveyID })" class="btn btn-warning">Edit</a>
-                    <button class="btn btn-success submit-survey" data-survey-id="@survey.SurveyID">Submit Survey</button>
-                    <a href="@Url.Action("Index", "SurveyResponse", new { id = survey.SurveyID })" class="btn btn-secondary">View Submissions</a>
-                    <button class="btn btn-danger delete-survey">Delete</button>
-                </td>
+else
+{
+    <h1>Surveys</h1>
+
+    <a href="@Url.Action("Create", "Survey")" class="btn btn-primary">Create New Survey</a>
+
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody id="surveyTableBody">
+            @foreach (var survey in Model)
+            {
+                <tr data-survey-id="@survey.SurveyID">
+                    <td>@survey.Name</td>
+                    <td>
+                        <a href="@Url.Action("Details", "Survey", new { id = survey.SurveyID })" class="btn btn-info">Details</a>
+                        <a href="@Url.Action("Edit", "Survey", new { id = survey.SurveyID })" class="btn btn-warning">Edit</a>
+                        <button class="btn btn-success submit-survey" data-survey-id="@survey.SurveyID">Submit Survey</button>
+                        <a href="@Url.Action("Index", "SurveyResponse", new { id = survey.SurveyID })" class="btn btn-secondary">View Submissions</a>
+                        <button class="btn btn-danger delete-survey">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -65,6 +79,9 @@
             });
         });
     </script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 }
 
 

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace dhub.Models.ViewModels
+namespace dhub.Models
 {
     public class SurveyResponseViewModel
     {
@@ -10,6 +10,8 @@ namespace dhub.Models.ViewModels
         public Guid SurveyID { get; set; }
 
         public List<QuestionResponse> Responses { get; set; } = new List<QuestionResponse>();
+
+        public string SubmittedBy { get; set; }
 
         public class QuestionResponse
         {

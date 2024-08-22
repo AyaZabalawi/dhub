@@ -9,8 +9,9 @@
 <table class="table mt-3">
     <thead>
         <tr>
-            <th>Response ID</th>
             <th>Survey Name</th>
+            <th>Response ID</th>
+            <th>Submitted By</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -18,8 +19,9 @@
         @foreach (var response in Model)
         {
             <tr>
-                <td>@response.ResponseID</td>
                 <td>@response.Survey.Name</td>
+                <td>@response.ResponseID</td>
+                <td>@response.SubmittedBy</td>
                 <td>
                     <a href="@Url.Action("Details", "SurveyResponse", new { id = response.ResponseID })" class="btn btn-info">View Details</a>
                 </td>
@@ -29,3 +31,10 @@
 </table>
 
 <a href="@Url.Action("Index", "Survey")" class="btn btn-primary mt-3">Back to Surveys</a>
+
+@section Scripts
+{
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" integrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iArs3IhFWSWdRT3Pq8wFz46p+ZDFAR7kHnSFf+zUv52B3prRYnbDRdgog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+}
